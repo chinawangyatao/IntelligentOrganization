@@ -139,7 +139,7 @@ export default function App() {
                   <Building2 />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-semibold">微梦 · 智能组织</span>
+                  <span className="truncate font-semibold">智能组织</span>
                   <span className="truncate text-xs text-muted-foreground">项目协同工作台</span>
                 </div>
               </SidebarMenuButton>

@@ -89,7 +89,7 @@ export default function Settings({
               <Building2 className="size-5" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold">微梦 · 智能组织</h1>
+              <h1 className="text-xl font-semibold">智能组织</h1>
               <p className="text-sm text-muted-foreground">项目协同工作台</p>
             </div>
           </div>

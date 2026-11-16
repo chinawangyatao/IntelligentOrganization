@@ -1,6 +1,6 @@
 import { api } from './client.mjs';
 const projects = await api('/projects');
-if (projects.some((p) => p.name === '微梦 · 订单协作试点')) {
+if (projects.some((p) => p.name === '订单协作试点')) {
   console.log('演示项目已存在，保留当前数据。');
   process.exit(0);
 }
@@ -18,7 +18,7 @@ for (const name of names) {
 const p = await api('/projects', {
   method: 'POST',
   body: {
-    name: '微梦 · 订单协作试点',
+    name: '订单协作试点',
     description: '用于体验产品、前后端与测试的协作交接。内容为演示数据；模型调用用量不伪造。',
   },
 });
