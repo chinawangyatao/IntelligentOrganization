@@ -1,0 +1,7 @@
+{
+  "name": "intelligent-organization",
+  "version": "0.1.0",
+  "description": "Project tasks, versioned shared memory, handover and collaboration",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

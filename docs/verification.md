@@ -1,0 +1,28 @@
+# 验证记录
+
+验证日期：2026-11-16（Asia/Shanghai）。本机 macOS / Apple Silicon，Node 24.18、pnpm 11.10、Go 1.24.2、Rust 1.97、专用 Docker PostgreSQL 16。
+
+## 已通过
+
+- `pnpm install`、`pnpm check`、`pnpm build`、`pnpm format:check`。
+- `go vet ./...` 与 10 组真实 PostgreSQL 集成测试（`go test -race -count=1 ./...`）。测试只创建、删除随机测试 schema。
+- `node scripts/verify-flow.mjs` 对运行服务执行完整跨成员流程：项目权限、定向通知及已读隔离、记忆变更检查、验收权限、用量去重、私聊隔离/未读、消息提炼草稿、责任移交保留历史、复用清空成员和完成状态。
+- 所有插件 build / typecheck / test。公共桥、Codex bundle 和 DSH bundle 均经真实 stdio MCP 客户端协议烟测（共 9 项）；DSH 另有 5 项注册、计量、去重、路由及断网补报测试。
+- 对实际 Go 服务完成 MCP 身份、项目和会话列表的只读联调。
+- shadcn 新版真实界面交互：登录、项目切换、任务详情编辑主责人、消息发送、提炼草稿、通知读取及跨项目跳转。
+- 通信回归：无项目成员仍可私聊；延迟发送响应不污染切换后的会话；后台新增 120 条消息完整补齐；轮询与发送期间新输入草稿保留。
+- `pnpm build:app` 生成 macOS `.app`（约 10 MiB），原生程序实际启动并显示连接界面。
+- Rust 服务地址验证测试；系统凭证库独立测试条目的写入/读取/删除往返通过，不使用或保留真实成员凭证。
+- Git 暂存内容扫描：未包含本机管理员令牌和数据库密码，`.env` 与数据库数据、编译产物均排除。
+
+## 实际限制
+
+- 通信每 3 秒轮询，通知每 15 秒同步；没有将其宣称为 WebSocket/SSE 实时推送。
+- 本机包未签名/公证，最低 macOS 13.3；Windows/Linux 尚未实机构建。
+- Codex/DeepSeek Harness 中的实际安装、模型真实调用和发行版本兼容性尚待宿主联调。协议、fixture 和打包测试不能替代宿主验收。
+- Codex 自动会话/用量采集、强制上下文推送、平台托管所有 AI 执行、供应商余额查询及账号自动开通未实现。DSH 可选采集只覆盖显式绑定会话和可解析的真实 usage。
+- 使用内部试点访问令牌；没有 SSO、找回、完整管理员凭证轮换界面。
+- 首版不包含钉钉、附件/音视频、离线写入合并、端到端加密及自动更新服务。
+- Vite 提示单个前端 chunk 超过 500 KiB（gzip约175 KiB），构建通过；尚未按页面拆包。
+
+GitHub Actions 配置随源码提供，远端执行结果以仓库 Actions 页面为准。

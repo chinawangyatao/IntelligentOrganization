@@ -1,0 +1,7 @@
+packages:
+  - apps/*
+  - plugins/*
+  - packages/*
+autoInstallPeers: false
+allowBuilds:
+  esbuild: true

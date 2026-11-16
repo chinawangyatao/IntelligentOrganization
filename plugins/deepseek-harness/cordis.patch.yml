@@ -1,0 +1,10 @@
+# Host-plane bundle, following the dsh-agent-teams package layout.
+# Keep credentials in the host environment/credential provider, never this file.
+- insert:
+    - id: intelligent-organization
+      name: '@intelligent-organization/dsh-plugin'
+      config:
+        baseUrl: http://127.0.0.1:17890
+        tokenEnv: IO_MEMBER_TOKEN
+        stateDir: .intelligent-organization/usage-outbox
+        telemetryBindings: []

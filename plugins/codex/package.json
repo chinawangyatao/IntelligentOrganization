@@ -1,0 +1,17 @@
+{
+  "name": "@intelligent-organization/codex-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Codex plugin bundle for Intelligent Organization",
+  "scripts": {
+    "build": "node scripts/build.mjs && node scripts/validate.mjs --runtime",
+    "typecheck": "node scripts/validate.mjs",
+    "test": "node scripts/validate.mjs --runtime && node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "@intelligent-organization/mcp-bridge": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

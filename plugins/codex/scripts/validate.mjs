@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { readFile, stat } from 'node:fs/promises';
+const root = new URL('../', import.meta.url);
+const parse = async path => JSON.parse(await readFile(new URL(path, root), 'utf8'));
+const manifest = await parse('plugin.json');
+assert.equal(manifest.name, 'intelligent-organization');
+assert.equal(manifest.version, '0.1.0');
+const mcp = await parse('mcp.json');
+assert.equal(mcp.mcpServers['intelligent-organization'].type, 'stdio');
+assert.equal(mcp.mcpServers['intelligent-organization'].args[0], '${PLUGIN_ROOT}/runtime/server.cjs');
+assert.deepEqual(mcp, await parse('.mcp.json'));
+if (process.argv.includes('--runtime')) assert.ok((await stat(new URL('runtime/server.cjs', root))).size > 1000, 'build the self-contained runtime first');
+await stat(new URL('scripts/build.mjs', root));
+assert.match(await readFile(new URL('skills/project-collaboration/SKILL.md', root), 'utf8'), /organization_task_context/);
+console.log('Codex portable and compatibility plugin manifests validated; host installation still requires a live smoke test.');

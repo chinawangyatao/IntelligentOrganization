@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "intelligent-organization",
+  "version": "0.1.0",
+  "description": "在 Codex 中读取项目共同记忆、协作任务、提交成果和反馈问题",
+  "author": { "name": "Intelligent Organization" },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "智能组织 · 项目协同",
+        "shortDescription": "以有版本的共同记忆完成项目协作",
+        "developerName": "Intelligent Organization",
+        "category": "Productivity",
+        "capabilities": ["Read", "Write"]
+      }
+    }
+  }
+}
