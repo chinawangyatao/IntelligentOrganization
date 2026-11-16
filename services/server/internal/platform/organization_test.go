@@ -231,7 +231,8 @@ func TestOrganizationOverviewCrossProjectAccountingAndPrivacy(t *testing.T) {
 	first, second, empty := projects[pa.ID], projects[pb.ID], projects[pc.ID]
 	emptyActivity := pc.CreatedAt
 	for _, event := range sc.Events {
-		at := event.CreatedAt.Truncate(time.Microsecond)
+		// PostgreSQL timestamptz rounds JSON nanoseconds to microseconds.
+		at := event.CreatedAt.Round(time.Microsecond)
 		if at.After(emptyActivity) {
 			emptyActivity = at
 		}
