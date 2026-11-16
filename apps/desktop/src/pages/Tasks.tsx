@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { AppSelect, AppSelectOption } from '@/components/AppSelect';
 import { FieldGroup } from '@/components/ui/field';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -71,18 +71,18 @@ export default function Tasks(
         }
       />
       <div className="flex items-center gap-3">
-        <NativeSelect
+        <AppSelect
           value={nodeFilter}
-          onChange={(e) => setNodeFilter(e.target.value)}
+          onValueChange={(value) => setNodeFilter(value)}
           aria-label="筛选节点"
         >
-          <NativeSelectOption value="">全部节点</NativeSelectOption>
+          <AppSelectOption value="">全部节点</AppSelectOption>
           {data.nodes.map((n) => (
-            <NativeSelectOption key={n.id} value={n.id}>
+            <AppSelectOption key={n.id} value={n.id}>
               {n.name}
-            </NativeSelectOption>
+            </AppSelectOption>
           ))}
-        </NativeSelect>
+        </AppSelect>
         <span className="text-sm text-muted-foreground">{tasks.length} 项工作</span>
         <span className="ml-auto text-sm text-muted-foreground">完成进度以成果验收为准</span>
       </div>
@@ -219,20 +219,20 @@ function TaskForm({
             />
           </Field>
           <Field label="所属节点">
-            <NativeSelect
+            <AppSelect
               className="w-full"
               disabled={!!task}
               value={form.nodeId}
-              onChange={(e) =>
-                setForm({ ...form, nodeId: e.target.value, ownerId: '', collaboratorIds: [] })
+              onValueChange={(value) =>
+                setForm({ ...form, nodeId: value, ownerId: '', collaboratorIds: [] })
               }
             >
               {data.nodes.map((n) => (
-                <NativeSelectOption key={n.id} value={n.id}>
+                <AppSelectOption key={n.id} value={n.id}>
                   {n.name}
-                </NativeSelectOption>
+                </AppSelectOption>
               ))}
-            </NativeSelect>
+            </AppSelect>
           </Field>
           <FieldGroup className="grid grid-cols-2 gap-4">
             <Field label="主责人">

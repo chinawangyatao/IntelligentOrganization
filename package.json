@@ -12,7 +12,7 @@
     "build:app": "pnpm --filter @io/desktop tauri build --bundles app",
     "check": "pnpm -r --if-present typecheck",
     "test:api": "node scripts/test-api.mjs",
-    "test:flow": "node scripts/verify-flow.mjs",
+    "test:flow": "node scripts/isolated-flow.mjs",
     "seed": "node scripts/seed.mjs",
     "setup:local": "node scripts/setup.mjs",
     "format": "prettier --write \"apps/desktop/src/**/*.{ts,tsx,css}\" \"plugins/*/src/**/*.ts\" \"scripts/*.mjs\"",

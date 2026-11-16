@@ -3,6 +3,8 @@
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/geist';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   .theme {
     --font-heading: var(--font-sans);
@@ -68,8 +70,8 @@
     --chart-5: oklch(0.269 0 0);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
     --sidebar-accent: oklch(0.269 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
@@ -137,4 +139,70 @@
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
+}
+
+@layer base {
+  :root[data-theme-color='blue'] {
+    --primary: oklch(0.488 0.243 264.376);
+    --primary-foreground: oklch(0.985 0 0);
+    --ring: var(--primary);
+  }
+  :root[data-theme-color='green'] {
+    --primary: oklch(0.527 0.154 150.069);
+    --primary-foreground: oklch(0.985 0 0);
+    --ring: var(--primary);
+  }
+  :root[data-theme-color='violet'] {
+    --primary: oklch(0.491 0.27 292.581);
+    --primary-foreground: oklch(0.985 0 0);
+    --ring: var(--primary);
+  }
+  :root[data-theme-color='rose'] {
+    --primary: oklch(0.514 0.222 16.935);
+    --primary-foreground: oklch(0.985 0 0);
+    --ring: var(--primary);
+  }
+  :root.dark[data-theme-color='blue'] {
+    --primary: oklch(0.707 0.165 254.624);
+    --primary-foreground: oklch(0.145 0 0);
+  }
+  :root.dark[data-theme-color='green'] {
+    --primary: oklch(0.792 0.209 151.711);
+    --primary-foreground: oklch(0.145 0 0);
+  }
+  :root.dark[data-theme-color='violet'] {
+    --primary: oklch(0.702 0.183 293.541);
+    --primary-foreground: oklch(0.145 0 0);
+  }
+  :root.dark[data-theme-color='rose'] {
+    --primary: oklch(0.712 0.194 13.428);
+    --primary-foreground: oklch(0.145 0 0);
+  }
+  :root[data-theme-color]:not([data-theme-color='neutral']) {
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-ring: var(--ring);
+    --sidebar-accent: color-mix(in oklch, var(--primary) 10%, var(--sidebar));
+    --chart-1: var(--primary);
+  }
+}
+
+.theme-color-swatch {
+  background: oklch(0.205 0 0);
+  outline: 1px solid var(--border);
+}
+.dark .theme-color-swatch[data-color='neutral'] {
+  background: oklch(0.922 0 0);
+}
+.theme-color-swatch[data-color='blue'] {
+  background: oklch(0.546 0.245 262.881);
+}
+.theme-color-swatch[data-color='green'] {
+  background: oklch(0.527 0.154 150.069);
+}
+.theme-color-swatch[data-color='violet'] {
+  background: oklch(0.541 0.281 293.009);
+}
+.theme-color-swatch[data-color='rose'] {
+  background: oklch(0.586 0.253 17.585);
 }

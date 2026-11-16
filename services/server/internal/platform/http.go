@@ -99,6 +99,7 @@ func (s *Store) Handler() http.Handler {
 	api.HandleFunc("POST /api/members", wrap(s.createMember))
 	api.HandleFunc("POST /api/members/{id}/deactivate", wrap(s.deactivateMember))
 	api.HandleFunc("GET /api/projects", wrap(s.listProjects))
+	api.HandleFunc("GET /api/organization/overview", wrap(s.organizationOverview))
 	api.HandleFunc("POST /api/projects", wrap(s.createProject))
 	api.HandleFunc("GET /api/projects/{pid}/snapshot", wrap(s.getSnapshot))
 	api.HandleFunc("PATCH /api/projects/{pid}/nodes/{id}", wrap(s.patchNode))

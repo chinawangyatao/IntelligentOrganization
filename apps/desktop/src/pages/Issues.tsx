@@ -21,7 +21,7 @@ import {
   EmptyDescription,
 } from '@/components/ui/empty';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { AppSelect, AppSelectOption } from '@/components/AppSelect';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { memberName, formatTime } from '../types';
@@ -228,54 +228,52 @@ export default function Issues({ data, members, me, api, run, busy, onDiscuss }:
               <FieldGroup className="grid grid-cols-2 gap-4">
                 <Field>
                   <FieldLabel htmlFor="issue-node">关联节点</FieldLabel>
-                  <NativeSelect
+                  <AppSelect
                     id="issue-node"
                     required
                     value={form.nodeId}
-                    onChange={(event) =>
-                      setForm({ ...form, nodeId: event.target.value, taskId: '' })
-                    }
+                    onValueChange={(value) => setForm({ ...form, nodeId: value, taskId: '' })}
                   >
                     {data.nodes.map((node) => (
-                      <NativeSelectOption key={node.id} value={node.id}>
+                      <AppSelectOption key={node.id} value={node.id}>
                         {node.name}
-                      </NativeSelectOption>
+                      </AppSelectOption>
                     ))}
-                  </NativeSelect>
+                  </AppSelect>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="issue-assignee">处理负责人</FieldLabel>
-                  <NativeSelect
+                  <AppSelect
                     id="issue-assignee"
                     required
                     value={form.assigneeId}
-                    onChange={(event) => setForm({ ...form, assigneeId: event.target.value })}
+                    onValueChange={(value) => setForm({ ...form, assigneeId: value })}
                   >
-                    <NativeSelectOption value="">选择负责人</NativeSelectOption>
+                    <AppSelectOption value="">选择负责人</AppSelectOption>
                     {projectMembers.map((member) => (
-                      <NativeSelectOption key={member.id} value={member.id}>
+                      <AppSelectOption key={member.id} value={member.id}>
                         {member.name}
-                      </NativeSelectOption>
+                      </AppSelectOption>
                     ))}
-                  </NativeSelect>
+                  </AppSelect>
                 </Field>
               </FieldGroup>
               <Field>
                 <FieldLabel htmlFor="issue-task">关联工作项</FieldLabel>
-                <NativeSelect
+                <AppSelect
                   id="issue-task"
                   value={form.taskId}
-                  onChange={(event) => setForm({ ...form, taskId: event.target.value })}
+                  onValueChange={(value) => setForm({ ...form, taskId: value })}
                 >
-                  <NativeSelectOption value="">不关联工作项</NativeSelectOption>
+                  <AppSelectOption value="">不关联工作项</AppSelectOption>
                   {data.tasks
                     .filter((task) => task.nodeId === form.nodeId)
                     .map((task) => (
-                      <NativeSelectOption key={task.id} value={task.id}>
+                      <AppSelectOption key={task.id} value={task.id}>
                         {task.title}
-                      </NativeSelectOption>
+                      </AppSelectOption>
                     ))}
-                </NativeSelect>
+                </AppSelect>
               </Field>
               <Field>
                 <FieldLabel htmlFor="issue-description">问题、证据与影响</FieldLabel>

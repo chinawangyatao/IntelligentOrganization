@@ -24,7 +24,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { AppSelect, AppSelectOption } from '@/components/AppSelect';
 import { FieldGroup } from '@/components/ui/field';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -622,11 +622,11 @@ function ConversationForm({
         <FieldGroup>
           {error && <Notice kind="error">{error}</Notice>}
           <Field label="会话类型">
-            <NativeSelect
+            <AppSelect
               className="w-full"
               value={kind}
-              onChange={(e) => {
-                setKind(e.target.value as typeof kind);
+              onValueChange={(value) => {
+                setKind(value as typeof kind);
                 setScope('');
                 setParticipants([]);
               }}
@@ -634,11 +634,11 @@ function ConversationForm({
               {Object.entries(kindLabel)
                 .filter(([key]) => data.project.id || ['direct', 'group'].includes(key))
                 .map(([key, label]) => (
-                  <NativeSelectOption key={key} value={key}>
+                  <AppSelectOption key={key} value={key}>
                     {label}
-                  </NativeSelectOption>
+                  </AppSelectOption>
                 ))}
-            </NativeSelect>
+            </AppSelect>
           </Field>
           {kind === 'group' && (
             <Field label="小群名称">
@@ -649,43 +649,43 @@ function ConversationForm({
             <Field
               label={kind === 'node' ? '关联节点' : kind === 'task' ? '关联工作项' : '关联问题'}
             >
-              <NativeSelect
+              <AppSelect
                 className="w-full"
                 required
                 value={scope}
-                onChange={(e) => setScope(e.target.value)}
+                onValueChange={(value) => setScope(value)}
               >
-                <NativeSelectOption value="">请选择</NativeSelectOption>
+                <AppSelectOption value="">请选择</AppSelectOption>
                 {(kind === 'node'
                   ? data.nodes.map((n) => ({ id: n.id, title: n.name }))
                   : kind === 'task'
                     ? data.tasks
                     : data.issues
                 ).map((item) => (
-                  <NativeSelectOption key={item.id} value={item.id}>
+                  <AppSelectOption key={item.id} value={item.id}>
                     {item.title}
-                  </NativeSelectOption>
+                  </AppSelectOption>
                 ))}
-              </NativeSelect>
+              </AppSelect>
             </Field>
           )}
           {kind === 'direct' && (
             <Field label="联系成员">
-              <NativeSelect
+              <AppSelect
                 className="w-full"
                 required
                 value={participants[0] || ''}
-                onChange={(e) => setParticipants(e.target.value ? [e.target.value] : [])}
+                onValueChange={(value) => setParticipants(value ? [value] : [])}
               >
-                <NativeSelectOption value="">选择成员</NativeSelectOption>
+                <AppSelectOption value="">选择成员</AppSelectOption>
                 {members
                   .filter((m) => m.active && m.id !== me.id)
                   .map((m) => (
-                    <NativeSelectOption key={m.id} value={m.id}>
+                    <AppSelectOption key={m.id} value={m.id}>
                       {m.name}
-                    </NativeSelectOption>
+                    </AppSelectOption>
                   ))}
-              </NativeSelect>
+              </AppSelect>
             </Field>
           )}
           {kind === 'group' && (
@@ -772,31 +772,31 @@ function PromoteForm({
           </Field>
           <FieldGroup className="grid grid-cols-2 gap-4">
             <Field label="记忆类型">
-              <NativeSelect
+              <AppSelect
                 className="w-full"
                 value={kind}
-                onChange={(e) => setKind(e.target.value as MemoryKind)}
+                onValueChange={(value) => setKind(value as MemoryKind)}
               >
                 {Object.entries(memoryKinds).map(([key, label]) => (
-                  <NativeSelectOption key={key} value={key}>
+                  <AppSelectOption key={key} value={key}>
                     {label}
-                  </NativeSelectOption>
+                  </AppSelectOption>
                 ))}
-              </NativeSelect>
+              </AppSelect>
             </Field>
             <Field label="适用范围">
-              <NativeSelect
+              <AppSelect
                 className="w-full"
                 value={nodeId}
-                onChange={(e) => setNodeId(e.target.value)}
+                onValueChange={(value) => setNodeId(value)}
               >
-                <NativeSelectOption value="">项目通用</NativeSelectOption>
+                <AppSelectOption value="">项目通用</AppSelectOption>
                 {data.nodes.map((n) => (
-                  <NativeSelectOption key={n.id} value={n.id}>
+                  <AppSelectOption key={n.id} value={n.id}>
                     {n.name}
-                  </NativeSelectOption>
+                  </AppSelectOption>
                 ))}
-              </NativeSelect>
+              </AppSelect>
             </Field>
           </FieldGroup>
           <div className="flex justify-end gap-2">

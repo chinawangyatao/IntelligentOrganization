@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
 import { api } from './client.mjs';
+
+if (process.env.IO_ISOLATED_FLOW !== '1') {
+  throw new Error('请使用 pnpm test:flow，在独立测试空间执行，避免污染试用数据。');
+}
 const suffix = Date.now().toString(36);
 const createMember = async (name) =>
   api('/members', { method: 'POST', body: { name: `验证-${suffix}-${name}`, role: 'member' } });

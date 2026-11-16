@@ -28,7 +28,7 @@ import {
   FieldSet,
   FieldLegend,
 } from '@/components/ui/field';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { AppSelect, AppSelectOption } from '@/components/AppSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -277,14 +277,14 @@ export default function People(props: PageProps) {
               </Field>
               <Field>
                 <FieldLabel htmlFor="member-role">组织角色</FieldLabel>
-                <NativeSelect
+                <AppSelect
                   id="member-role"
                   value={role}
-                  onChange={(event) => setRole(event.target.value as 'admin' | 'member')}
+                  onValueChange={(value) => setRole(value as 'admin' | 'member')}
                 >
-                  <NativeSelectOption value="member">协作成员</NativeSelectOption>
-                  <NativeSelectOption value="admin">管理员</NativeSelectOption>
-                </NativeSelect>
+                  <AppSelectOption value="member">协作成员</AppSelectOption>
+                  <AppSelectOption value="admin">管理员</AppSelectOption>
+                </AppSelect>
               </Field>
               <Alert>
                 <AlertDescription>
@@ -556,41 +556,41 @@ function HandoverForm({
           <FieldGroup className="grid grid-cols-2 gap-4">
             <Field>
               <FieldLabel htmlFor="handover-from">原负责人</FieldLabel>
-              <NativeSelect
+              <AppSelect
                 id="handover-from"
                 value={fromMemberId}
-                onChange={(event) => {
-                  setFrom(event.target.value);
+                onValueChange={(value) => {
+                  setFrom(value);
                   setNodes([]);
-                  if (event.target.value === toMemberId) setTo('');
+                  if (value === toMemberId) setTo('');
                 }}
               >
-                <NativeSelectOption value="">选择成员</NativeSelectOption>
+                <AppSelectOption value="">选择成员</AppSelectOption>
                 {members
                   .filter((member) => member.active)
                   .map((member) => (
-                    <NativeSelectOption key={member.id} value={member.id}>
+                    <AppSelectOption key={member.id} value={member.id}>
                       {member.name}
-                    </NativeSelectOption>
+                    </AppSelectOption>
                   ))}
-              </NativeSelect>
+              </AppSelect>
             </Field>
             <Field>
               <FieldLabel htmlFor="handover-to">新负责人</FieldLabel>
-              <NativeSelect
+              <AppSelect
                 id="handover-to"
                 value={toMemberId}
-                onChange={(event) => setTo(event.target.value)}
+                onValueChange={(value) => setTo(value)}
               >
-                <NativeSelectOption value="">选择成员</NativeSelectOption>
+                <AppSelectOption value="">选择成员</AppSelectOption>
                 {members
                   .filter((member) => member.active && member.id !== fromMemberId)
                   .map((member) => (
-                    <NativeSelectOption key={member.id} value={member.id}>
+                    <AppSelectOption key={member.id} value={member.id}>
                       {member.name}
-                    </NativeSelectOption>
+                    </AppSelectOption>
                   ))}
-              </NativeSelect>
+              </AppSelect>
             </Field>
           </FieldGroup>
           <FieldSet>

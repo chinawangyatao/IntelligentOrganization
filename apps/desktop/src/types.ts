@@ -196,3 +196,49 @@ export interface MessagePage {
   hasMore: boolean;
   receipts: { memberId: string; messageId: string; readAt: string }[];
 }
+
+export interface CostTotal {
+  currency: string;
+  source: 'reported' | 'estimated' | 'unknown';
+  amount: number;
+}
+export interface OrganizationProject {
+  project: Project;
+  nodeOwners: Member[];
+  unassignedNodeCount: number;
+  tasks: {
+    total: number;
+    todo: number;
+    inProgress: number;
+    review: number;
+    done: number;
+    blocked: number;
+    unassigned: number;
+  };
+  openIssues: number;
+  pendingHandovers: number;
+  publishedMemories: number;
+  draftMemories: number;
+  lastActivityAt: string;
+  usage: { requests: number; inputTokens: number; outputTokens: number; cacheReadTokens: number };
+  costs: CostTotal[];
+}
+export interface OrganizationOverview {
+  generatedAt: string;
+  totals: {
+    projectCount: number;
+    activeMemberCount: number;
+    totalTasks: number;
+    doneTasks: number;
+    reviewTasks: number;
+    blockedTasks: number;
+    openIssues: number;
+    pendingHandovers: number;
+    inputTokens: number;
+    outputTokens: number;
+    cacheReadTokens: number;
+    requestCount: number;
+  };
+  costs: CostTotal[];
+  projects: OrganizationProject[];
+}

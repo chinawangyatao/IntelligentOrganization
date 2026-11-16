@@ -17,6 +17,7 @@ Startup applies the idempotent initial schema under a transaction-scoped migrati
 - `tasks.go`, `memories.go`: task transitions, memory baselines and version history.
 - `workflows.go`: issues, atomic responsibility handover and clean project reuse.
 - `usage.go`: authenticated attribution and idempotent request accounting.
+- `organization.go`: administrator-only cross-project progress, responsibility and usage summaries.
 - `conversations.go`, `messages.go`: channels, private chats, chronological cursors, unread counts, monotonic receipts and explicit draft promotion.
 - `notifications.go`: transactional recipient-only action notices, filtered by current project access.
 - `store.go`: PostgreSQL initial schema, persistence and project transaction boundary.
@@ -33,6 +34,8 @@ Member assignments lock their member rows, coordinating with deactivation. Reque
 Direct/group conversations require participant membership, including for administrators. Public channels use current project access. Messages are ordered by database sequence, and read cursors only advance. Chat is never automatically included in AI context. Promotion creates a source-cited draft; private-chat promotion requires the message author, and formal publication uses ordinary project/node permissions.
 
 Communication clients should poll every 3 seconds while visible and refetch durable history after reconnecting. There is no SSE endpoint, external notification delivery or DingTalk integration in this release. Receipts indicate message reading, not acceptance of a task or decision. Task assignment, submission, return, issue assignment, handover and affected memory changes create durable recipient-only notifications in the same transaction. GET /api/notifications shows the current member’s latest 200 accessible notices. Marking one read never accepts the underlying task, issue or handover.
+
+`GET /api/organization/overview` is available only to active administrators. It reads project-wide aggregates in one repeatable-read, read-only transaction, using a fixed number of grouped table queries rather than fetching every project snapshot. It returns no conversation content. Completion is based on accepted task counts; cached input remains a subset of input usage, and monetary totals stay separated by currency and source.
 
 The first schema stores separately indexed entity payloads as JSONB with relational project keys. This is a pilot schema, not a full enterprise audit/event warehouse; future schema changes should be added as numbered migrations rather than modifying deployed history.
 

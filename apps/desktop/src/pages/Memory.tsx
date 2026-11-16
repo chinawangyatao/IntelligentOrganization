@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Textarea } from '@/components/ui/textarea';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { AppSelect, AppSelectOption } from '@/components/AppSelect';
 import { Field, FieldGroup, FieldLabel, FieldDescription } from '@/components/ui/field';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -305,34 +305,34 @@ function MemoryEditor({
           <FieldGroup className="grid grid-cols-2 gap-4">
             <Field data-disabled={!!entry}>
               <FieldLabel htmlFor="memory-kind">记忆类型</FieldLabel>
-              <NativeSelect
+              <AppSelect
                 id="memory-kind"
                 disabled={!!entry}
                 value={form.kind}
-                onChange={(event) => setForm({ ...form, kind: event.target.value as MemoryKind })}
+                onValueChange={(value) => setForm({ ...form, kind: value as MemoryKind })}
               >
                 {Object.entries(memoryKinds).map(([key, label]) => (
-                  <NativeSelectOption key={key} value={key}>
+                  <AppSelectOption key={key} value={key}>
                     {label}
-                  </NativeSelectOption>
+                  </AppSelectOption>
                 ))}
-              </NativeSelect>
+              </AppSelect>
             </Field>
             <Field data-disabled={!!entry}>
               <FieldLabel htmlFor="memory-scope">适用范围</FieldLabel>
-              <NativeSelect
+              <AppSelect
                 id="memory-scope"
                 disabled={!!entry}
                 value={form.nodeId}
-                onChange={(event) => setForm({ ...form, nodeId: event.target.value })}
+                onValueChange={(value) => setForm({ ...form, nodeId: value })}
               >
-                <NativeSelectOption value="">项目通用</NativeSelectOption>
+                <AppSelectOption value="">项目通用</AppSelectOption>
                 {data.nodes.map((node) => (
-                  <NativeSelectOption key={node.id} value={node.id}>
+                  <AppSelectOption key={node.id} value={node.id}>
                     {node.name}
-                  </NativeSelectOption>
+                  </AppSelectOption>
                 ))}
-              </NativeSelect>
+              </AppSelect>
             </Field>
           </FieldGroup>
           <Field>

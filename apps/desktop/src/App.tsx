@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   LayoutDashboard,
   KanbanSquare,
@@ -13,6 +13,7 @@ import {
   MessageSquare,
   LogOut,
   Building2,
+  Palette,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Empty, Field, Loading, Modal, Notice, PersonAvatar } from './components';
@@ -31,7 +32,7 @@ import {
   SidebarTrigger,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import ProjectPicker from '@/components/ProjectPicker';
 import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,6 +43,7 @@ import { useWorkspace } from './hooks';
 import { clearConnection } from './api';
 import type { ConversationScope, Project, Snapshot } from './types';
 import Overview from './pages/Overview';
+import Organization from './pages/Organization';
 import Tasks from './pages/Tasks';
 import Memory from './pages/Memory';
 import Issues from './pages/Issues';
@@ -49,6 +51,7 @@ import People from './pages/People';
 import Reuse from './pages/Reuse';
 import Usage from './pages/Usage';
 import Settings from './pages/Settings';
+import SystemSettings from './pages/SystemSettings';
 import Communication from './pages/Communication';
 import NotificationBell from './NotificationBell';
 
@@ -64,12 +67,36 @@ const navigation = [
 ];
 export default function App() {
   const w = useWorkspace();
-  const [page, setPage] = useState('overview');
+  const [page, setPage] = useState('default');
+  const [organizationRefresh, setOrganizationRefresh] = useState(0);
+  const identityRef = useRef('');
   const [creating, setCreating] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
   const [requestedScope, setRequestedScope] = useState<ConversationScope | null>(null);
   const [focusTaskId, setFocusTaskId] = useState('');
+  const identity = w.me && w.connection ? `${w.connection.baseUrl}:${w.me.id}:${w.me.role}` : '';
+  useEffect(() => {
+    if (identityRef.current === identity) return;
+    identityRef.current = identity;
+    setPage('default');
+    setRequestedScope(null);
+    setFocusTaskId('');
+  }, [identity]);
+  const activePage =
+    page === 'default'
+      ? w.me?.role === 'admin'
+        ? 'organization'
+        : 'overview'
+      : page === 'organization' && w.me?.role !== 'admin'
+        ? 'overview'
+        : page;
+  const openProject = (id: string) => {
+    w.setProjectId(id);
+    setRequestedScope(null);
+    setFocusTaskId('');
+    setPage('overview');
+  };
   const opened = useCallback(() => setRequestedScope(null), []);
   const discuss = (scope: ConversationScope) => {
     setRequestedScope(scope);
@@ -126,7 +153,7 @@ export default function App() {
     busy: w.busy,
     onDiscuss: discuss,
   };
-  const current = navigation.find((n) => n.id === page);
+  const current = navigation.find((n) => n.id === activePage);
   return (
     <SidebarProvider style={{ '--sidebar-width': '16rem' } as React.CSSProperties}>
       <Toaster />
@@ -134,7 +161,10 @@ export default function App() {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" onClick={() => setPage('overview')}>
+              <SidebarMenuButton
+                size="lg"
+                onClick={() => setPage(w.me?.role === 'admin' ? 'organization' : 'overview')}
+              >
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <Building2 />
                 </div>
@@ -146,22 +176,8 @@ export default function App() {
             </SidebarMenuItem>
           </SidebarMenu>
           <div className="flex flex-col gap-3 px-2 py-3 group-data-[collapsible=icon]:hidden">
-            <NativeSelect
-              className="w-full"
-              aria-label="选择项目"
-              value={w.projectId}
-              onChange={(e) => {
-                w.setProjectId(e.target.value);
-                setRequestedScope(null);
-              }}
-            >
-              {!w.projects.length && <NativeSelectOption value="">尚无项目</NativeSelectOption>}
-              {w.projects.map((p) => (
-                <NativeSelectOption key={p.id} value={p.id}>
-                  {p.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+            <span className="text-xs font-medium text-muted-foreground">当前项目</span>
+            <ProjectPicker projects={w.projects} value={w.projectId} onValueChange={openProject} />
             {w.me.role === 'admin' && (
               <Button variant="secondary" className="w-full" onClick={() => setCreating(true)}>
                 <Plus />
@@ -172,13 +188,30 @@ export default function App() {
         </SidebarHeader>
         <SidebarSeparator />
         <SidebarContent>
+          {w.me.role === 'admin' && (
+            <SidebarGroup>
+              <SidebarGroupLabel>组织管理</SidebarGroupLabel>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={activePage === 'organization'}
+                    tooltip="组织总览"
+                    onClick={() => setPage('organization')}
+                  >
+                    <Building2 />
+                    <span>组织总览</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
           <SidebarGroup>
             <SidebarGroupLabel>项目协作</SidebarGroupLabel>
             <SidebarMenu>
               {navigation.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
-                    isActive={page === item.id}
+                    isActive={activePage === item.id}
                     tooltip={item.label}
                     onClick={() => setPage(item.id)}
                   >
@@ -200,7 +233,17 @@ export default function App() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={page === 'settings'}
+                isActive={activePage === 'system'}
+                tooltip="系统设置"
+                onClick={() => setPage('system')}
+              >
+                <Palette />
+                <span>系统设置</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={activePage === 'settings'}
                 tooltip="连接设置"
                 onClick={() => setPage('settings')}
               >
@@ -238,19 +281,33 @@ export default function App() {
           <Separator orientation="vertical" className="h-4" />
           <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">
             <span className="truncate text-muted-foreground">
-              {w.data?.project.name || '工作空间'}
+              {activePage === 'organization'
+                ? '组织空间'
+                : activePage === 'system'
+                  ? '应用设置'
+                  : w.data?.project.name || '工作空间'}
             </span>
             <span className="text-muted-foreground">/</span>
             <span className="shrink-0 font-medium">
-              {page === 'settings' ? '连接设置' : current?.label}
+              {activePage === 'organization'
+                ? '组织总览'
+                : activePage === 'system'
+                  ? '系统设置'
+                  : activePage === 'settings'
+                    ? '连接设置'
+                    : current?.label}
             </span>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            title="刷新项目数据"
+            title={activePage === 'organization' ? '刷新组织总览' : '刷新项目数据'}
             disabled={w.busy}
-            onClick={() => w.run(() => w.refresh(), '项目数据已同步')}
+            onClick={() =>
+              activePage === 'organization'
+                ? setOrganizationRefresh((value) => value + 1)
+                : w.run(() => w.refresh(), '项目数据已同步')
+            }
           >
             <RefreshCw data-icon="inline-start" className={w.busy ? 'animate-spin' : undefined} />
           </Button>
@@ -271,7 +328,17 @@ export default function App() {
         </header>
         <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
           {status}
-          {page === 'settings' ? (
+          {activePage === 'organization' && w.me.role === 'admin' ? (
+            <Organization
+              key={identity}
+              api={w.api}
+              refreshKey={organizationRefresh}
+              onOpenProject={openProject}
+              onCreateProject={() => setCreating(true)}
+            />
+          ) : activePage === 'system' ? (
+            <SystemSettings />
+          ) : activePage === 'settings' ? (
             <Settings
               connection={w.connection}
               me={w.me}
@@ -279,7 +346,7 @@ export default function App() {
               onConnect={w.connect}
               onDisconnect={disconnect}
             />
-          ) : page === 'communication' ? (
+          ) : activePage === 'communication' ? (
             <Communication
               key={w.projectId}
               {...shared}
@@ -307,8 +374,8 @@ export default function App() {
             />
           ) : (
             <>
-              {page === 'overview' && <Overview {...shared} onNavigate={setPage} />}{' '}
-              {page === 'tasks' && (
+              {activePage === 'overview' && <Overview {...shared} onNavigate={setPage} />}{' '}
+              {activePage === 'tasks' && (
                 <Tasks
                   key={w.projectId}
                   {...shared}
@@ -316,10 +383,10 @@ export default function App() {
                   onFocusConsumed={() => setFocusTaskId('')}
                 />
               )}{' '}
-              {page === 'memories' && <Memory {...shared} />}{' '}
-              {page === 'issues' && <Issues {...shared} />}{' '}
-              {page === 'people' && <People {...shared} />}{' '}
-              {page === 'reuse' && (
+              {activePage === 'memories' && <Memory {...shared} />}{' '}
+              {activePage === 'issues' && <Issues {...shared} />}{' '}
+              {activePage === 'people' && <People {...shared} />}{' '}
+              {activePage === 'reuse' && (
                 <Reuse
                   key={w.projectId}
                   {...shared}
@@ -329,7 +396,7 @@ export default function App() {
                   }}
                 />
               )}{' '}
-              {page === 'usage' && <Usage {...shared} />}
+              {activePage === 'usage' && <Usage {...shared} />}
             </>
           )}
         </main>

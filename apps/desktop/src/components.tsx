@@ -17,7 +17,7 @@ import {
   FieldGroup,
   FieldSet,
 } from '@/components/ui/field';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { AppSelect, AppSelectOption } from '@/components/AppSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -161,7 +161,9 @@ export function MemberSelect({
   onChange,
   label = '选择成员',
   allowEmpty = true,
+  id,
 }: {
+  id?: string;
   members: Member[];
   value: string;
   onChange: (v: string) => void;
@@ -169,22 +171,23 @@ export function MemberSelect({
   allowEmpty?: boolean;
 }) {
   return (
-    <NativeSelect
+    <AppSelect
+      id={id}
       aria-label={label}
       className="w-full"
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onValueChange={(value) => onChange(value)}
     >
-      {allowEmpty && <NativeSelectOption value="">未分配</NativeSelectOption>}
+      {allowEmpty && <AppSelectOption value="">未分配</AppSelectOption>}
       {members
         .filter((m) => m.active)
         .map((m) => (
-          <NativeSelectOption key={m.id} value={m.id}>
+          <AppSelectOption key={m.id} value={m.id}>
             {m.name}
             {m.role === 'admin' ? ' · 管理员' : ''}
-          </NativeSelectOption>
+          </AppSelectOption>
         ))}
-    </NativeSelect>
+    </AppSelect>
   );
 }
 export function MemberChecks({
