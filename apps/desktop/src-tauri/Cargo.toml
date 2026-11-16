@@ -1,6 +1,6 @@
 [package]
 name = "intelligent-organization"
-version = "0.1.0"
+version = "0.1.1"
 description = "A desktop workspace for accountable human and AI collaboration"
 edition = "2021"
 rust-version = "1.90"

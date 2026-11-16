@@ -33,6 +33,44 @@ func adminTask(a *testAPI, p Project, n Node, title string) Task {
 	a.must(adminToken, "POST", "/api/projects/"+p.ID+"/tasks", map[string]string{"nodeId": n.ID, "title": title, "ownerId": "admin", "reviewerId": "admin"}, &out)
 	return out
 }
+
+func TestWorkSessionTimestampsSurviveDatabaseRoundTrip(t *testing.T) {
+	a := newTestAPI(t)
+	p, snap := a.project("时间精度回归")
+	task := adminTask(a, p, snap.Nodes[3], "会话绑定")
+	g := prepareWork(a, adminToken, p, task, "codex")
+	assertTimes := func(phase string, response, persisted WorkSession) {
+		t.Helper()
+		for field, pair := range map[string][2]time.Time{
+			"createdAt": {response.CreatedAt, persisted.CreatedAt},
+			"expiresAt": {response.ExpiresAt, persisted.ExpiresAt},
+			"updatedAt": {response.UpdatedAt, persisted.UpdatedAt},
+		} {
+			immediate, reread := pair[0].Format(time.RFC3339Nano), pair[1].Format(time.RFC3339Nano)
+			if immediate != reread {
+				t.Errorf("%s %s changed after persistence: response=%s database=%s", phase, field, immediate, reread)
+			}
+		}
+	}
+	var reread WorkSession
+	a.must(g.Token, "GET", "/api/agent/session", nil, &reread)
+	assertTimes("create", g.Session, reread)
+	active := activateWork(a, adminToken, g.Session, "timestamp-regression-thread")
+	a.must(g.Token, "GET", "/api/agent/session", nil, &reread)
+	assertTimes("attach", active, reread)
+	if g.Session.CreatedAt.Format(time.RFC3339Nano) != active.CreatedAt.Format(time.RFC3339Nano) {
+		t.Error("create and attach must serialize the same immutable createdAt")
+	}
+	var revoked WorkSession
+	a.must(adminToken, "POST", "/api/work-sessions/"+g.Session.ID+"/revoke", nil, &revoked)
+	var listed []WorkSession
+	a.must(adminToken, "GET", "/api/projects/"+p.ID+"/tasks/"+task.ID+"/work-sessions", nil, &listed)
+	if len(listed) != 1 {
+		t.Fatalf("expected one session, got %d", len(listed))
+	}
+	assertTimes("revoke", revoked, listed[0])
+}
+
 func TestWorkSessionImmutableScopeAndHostThreads(t *testing.T) {
 	a := newTestAPI(t)
 	pa, sa := a.project("同名项目")

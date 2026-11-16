@@ -139,6 +139,7 @@ function parseProfile(value: unknown): BindingProfile {
   return profile;
 }
 function immutableSession(session: WorkSession): string {
+  // Timestamps are metadata: database precision/formatting can change after creation.
   return JSON.stringify([
     session.id,
     session.serviceInstanceId,
@@ -147,7 +148,6 @@ function immutableSession(session: WorkSession): string {
     session.taskId,
     session.nodeId,
     session.host,
-    session.createdAt,
   ]);
 }
 export function assertSameSession(

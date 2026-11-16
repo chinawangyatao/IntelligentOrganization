@@ -51,6 +51,11 @@ func scanWorkSession(row pgx.Row) (grantScope, error) {
 	var scope grantScope
 	s := &scope.Session
 	err := row.Scan(&s.ID, &s.ServiceInstanceID, &s.MemberID, &s.ProjectID, &s.TaskID, &s.NodeID, &s.Host, &s.NativeSessionID, &s.Status, &s.CreatedAt, &s.ExpiresAt, &s.UpdatedAt, &scope.AssignmentHash)
+	// pgx may scan timestamptz in the local zone. Keep API timestamps identical
+	// to the UTC values returned when a session was created or updated.
+	s.CreatedAt = s.CreatedAt.UTC()
+	s.ExpiresAt = s.ExpiresAt.UTC()
+	s.UpdatedAt = s.UpdatedAt.UTC()
 	return scope, err
 }
 func effectiveSession(s WorkSession) WorkSession {
@@ -230,7 +235,7 @@ func (s *Store) createWorkSession(w http.ResponseWriter, r *http.Request) (any, 
 		if err = tx.QueryRow(ctx, `SELECT value FROM io_workspace_metadata WHERE key='instance_id'`).Scan(&instanceID); err != nil {
 			return err
 		}
-		now := time.Now().UTC()
+		now := time.Now().UTC().Truncate(time.Microsecond)
 		session = WorkSession{ID: newID("session"), ServiceInstanceID: instanceID, MemberID: a.ID, ProjectID: p.ID, TaskID: t.ID, NodeID: n.ID, Host: in.Host, Status: "prepared", CreatedAt: now, ExpiresAt: now.Add(24 * time.Hour), UpdatedAt: now}
 		_, err = tx.Exec(ctx, `INSERT INTO io_work_sessions(id,service_instance_id,member_id,project_id,task_id,node_id,host,status,created_at,expires_at,updated_at,token_hash,assignment_hash)VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, session.ID, instanceID, a.ID, p.ID, t.ID, n.ID, in.Host, session.Status, now, session.ExpiresAt, now, hashToken(token), assignmentHash(t, n))
 		if err != nil {
@@ -316,7 +321,7 @@ func (s *Store) attachWorkSession(w http.ResponseWriter, r *http.Request) (any, 
 			out = current.Session
 			return nil
 		}
-		now := time.Now().UTC()
+		now := time.Now().UTC().Truncate(time.Microsecond)
 		_, err = tx.Exec(ctx, `UPDATE io_work_sessions SET native_session_id=$2,status='active',updated_at=$3 WHERE id=$1`, current.Session.ID, in.NativeSessionID, now)
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -359,7 +364,7 @@ func (s *Store) revokeWorkSession(w http.ResponseWriter, r *http.Request) (any, 
 	}
 	if current.Session.Status != "revoked" {
 		current.Session.Status = "revoked"
-		current.Session.UpdatedAt = time.Now().UTC()
+		current.Session.UpdatedAt = time.Now().UTC().Truncate(time.Microsecond)
 		if _, err = tx.Exec(ctx, `UPDATE io_work_sessions SET status='revoked',updated_at=$2 WHERE id=$1`, current.Session.ID, current.Session.UpdatedAt); err != nil {
 			return nil, err
 		}

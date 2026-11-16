@@ -102,12 +102,16 @@ export default function TaskWorkSessions({
   };
   const start = async (s: WorkSession) => {
     if (!native()) throw new Error('请在智能组织桌面 App 中启动 AI 会话。');
-    // Retry uses the same locally saved thread ID after a failed attach/open.
+    // Already bound sessions open the desktop chat directly, including recovery
+    // after attach succeeded but the previous local activation failed.
     assertCurrent();
-    const result = await invoke<LaunchResult>('work_session_launch', {
-      bindingId: s.id,
-      expectedSession: s,
-    });
+    const result: LaunchResult =
+      s.status === 'active' && s.nativeSessionId
+        ? { nativeSessionId: s.nativeSessionId, warnings: [] }
+        : await invoke<LaunchResult>('work_session_launch', {
+            bindingId: s.id,
+            expectedSession: s,
+          });
     assertCurrent();
     const attached = await api<WorkSession>(`/api/work-sessions/${s.id}/attach`, 'POST', {
       nativeSessionId: result.nativeSessionId,
@@ -252,7 +256,7 @@ export default function TaskWorkSessions({
                         }
                         onClick={() => action(() => start(s))}
                       >
-                        {s.status === 'active' ? '恢复会话' : '继续启动'}
+                        {s.status === 'active' ? '打开 Codex' : '继续启动'}
                       </Button>
                       <Button
                         variant="ghost"

@@ -281,6 +281,50 @@ test('global plugin resolves only exact host/thread index, never legacy sessionI
   }
 });
 
+test('database timestamp precision and formatting do not change binding identity', async () => {
+  const f = await fixture();
+  const a = await f.profile('timestamp');
+  const local = {
+    ...a.value,
+    session: { ...a.value.session, createdAt: '2026-11-16T03:04:05.123456789Z' },
+  };
+  await writeFile(a.file, JSON.stringify(local), { mode: 0o600 });
+  // PostgreSQL preserves microseconds rather than the creation response's nanoseconds.
+  a.value.session.createdAt = '2026-11-16T03:04:05.123456Z';
+  const client = await connect({ IO_BINDING_FILE: a.file, IO_HOST: 'codex' });
+  const call = (name = 'organization_bound_task_context') =>
+    client.callTool({ name, arguments: {}, _meta: { threadId: 'thread-timestamp' } });
+  try {
+    assert.equal(decode(await call()).context.task.id, 'task-timestamp');
+    assert.equal(decode(await call('organization_binding_status')).id, 'binding-timestamp');
+    assert.equal(decode(await call('organization_connection_status')).connected, true);
+
+    // Canonicalizing local metadata must also preserve an already-seen fingerprint.
+    local.session.createdAt = '2026-11-16T11:04:05.123456+08:00';
+    await writeFile(a.file, JSON.stringify(local), { mode: 0o600 });
+    assert.equal(decode(await call()).context.task.id, 'task-timestamp');
+
+    for (const field of [
+      'id',
+      'serviceInstanceId',
+      'memberId',
+      'projectId',
+      'taskId',
+      'nodeId',
+      'host',
+      'nativeSessionId',
+    ]) {
+      const original = a.value.session[field];
+      a.value.session[field] = field === 'host' ? 'deepseek-harness' : 'different-' + original;
+      assert.equal(decode(await call()).code, 'binding_mismatch', field);
+      a.value.session[field] = original;
+    }
+  } finally {
+    await client.close();
+    await f.close();
+  }
+});
+
 test('unsafe permissions/symlinks, expired grants and unproven activation fail closed', async () => {
   const f = await fixture();
   const a = await f.profile('a');

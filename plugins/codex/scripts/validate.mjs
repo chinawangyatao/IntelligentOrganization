@@ -4,7 +4,7 @@ const root = new URL('../', import.meta.url);
 const parse = async path => JSON.parse(await readFile(new URL(path, root), 'utf8'));
 const manifest = await parse('plugin.json');
 assert.equal(manifest.name, 'intelligent-organization');
-assert.equal(manifest.version, '0.2.0');
+assert.equal(manifest.version, '0.2.1');
 assert.equal(manifest.extensions['com.openai'].hooks, './hooks/hooks.json');
 assert.equal((await parse('package.json')).version, manifest.version);
 const compatibility = await parse('.codex-plugin/plugin.json');

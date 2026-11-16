@@ -210,6 +210,8 @@ fn write_private(path: &Path, value: &impl Serialize) -> Result<(), String> {
     result
 }
 fn same_binding(a: &Session, b: &Session) -> bool {
+    // Timestamps are metadata: PostgreSQL can change their precision/timezone.
+    // These immutable IDs establish identity across prepare/attach/resume.
     a.id == b.id
         && a.service_instance_id == b.service_instance_id
         && a.member_id == b.member_id
@@ -217,7 +219,6 @@ fn same_binding(a: &Session, b: &Session) -> bool {
         && a.task_id == b.task_id
         && a.node_id == b.node_id
         && a.host == b.host
-        && a.created_at == b.created_at
 }
 fn current_credential_hash(app: &tauri::AppHandle, base_url: &str) -> Result<String, String> {
     let connection = super::connection_load(app.clone())?.ok_or("请先连接协同服务")?;
@@ -235,10 +236,11 @@ fn validate_current_profile(
     expected: &Session,
 ) -> Result<(), String> {
     validate_session(expected)?;
-    if !same_binding(&p.session, expected)
-        || current_credential_hash(app, &p.base_url)? != p.member_credential_hash
-    {
-        return Err("会话不属于当前连接、成员或任务，请从当前任务重新进入".into());
+    if !same_binding(&p.session, expected) {
+        return Err("本机会话与当前项目或任务不一致，请在当前任务重新打开".into());
+    }
+    if current_credential_hash(app, &p.base_url)? != p.member_credential_hash {
+        return Err("登录成员或协同服务已变更，请使用当前连接新建工作会话".into());
     }
     Ok(())
 }
@@ -644,6 +646,57 @@ pub fn work_session_forget(app: tauri::AppHandle, binding_id: String) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn session_fixture() -> Session {
+        serde_json::from_value(serde_json::json!({
+            "id":"session-fixture", "serviceInstanceId":"service-fixture",
+            "memberId":"member-fixture", "projectId":"project-fixture",
+            "taskId":"task-fixture", "nodeId":"node-fixture", "host":"codex",
+            "status":"prepared", "createdAt":"2026-11-16T10:15:29.724151456Z",
+            "expiresAt":"2026-11-17T10:15:29.724151456Z",
+            "updatedAt":"2026-11-16T10:15:29.724151456Z"
+        }))
+        .unwrap()
+    }
+    #[test]
+    fn database_time_format_does_not_change_prepared_session_identity() {
+        let prepared = session_fixture();
+        let mut attached = prepared.clone();
+        attached.created_at = "2026-11-16T18:15:29.724151+08:00".into();
+        attached.updated_at = "2026-11-16T10:16:00Z".into();
+        attached.status = "active".into();
+        attached.native_session_id = Some("native-thread-fixture".into());
+        assert!(same_binding(&prepared, &attached));
+        attached.created_at = "2026-11-16T10:15:29.724151Z".into();
+        assert!(same_binding(&prepared, &attached));
+    }
+    #[test]
+    fn actual_binding_changes_are_rejected_even_when_timestamps_match() {
+        let expected = session_fixture();
+        for field in [
+            "id",
+            "serviceInstanceId",
+            "memberId",
+            "projectId",
+            "taskId",
+            "nodeId",
+            "host",
+        ] {
+            let mut changed = serde_json::to_value(&expected).unwrap();
+            changed[field] = serde_json::Value::String(
+                if field == "host" {
+                    "deepseek-harness"
+                } else {
+                    "different-id"
+                }
+                .into(),
+            );
+            let changed: Session = serde_json::from_value(changed).unwrap();
+            assert!(
+                !same_binding(&expected, &changed),
+                "{field} must remain immutable"
+            );
+        }
+    }
     #[test]
     fn duplicate_launch_does_not_create_second_thread() {
         let first = LaunchGuard::acquire("fixture-concurrent").unwrap();

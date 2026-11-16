@@ -5,7 +5,7 @@
 ## 已通过
 
 - `pnpm install`、`pnpm check`、`pnpm build`、`pnpm format:check`。
-- `go vet ./...` 与 17 组真实 PostgreSQL 集成测试（`go test -race -count=1 ./...`）。测试只创建、删除随机测试 schema。
+- `go vet ./...` 与 18 组真实 PostgreSQL 集成测试（`go test -race -count=1 ./...`）。测试只创建、删除随机测试 schema。
 - `pnpm test:flow` 在临时服务和独立 schema 中执行完整跨成员流程：项目权限、定向通知及已读隔离、记忆变更检查、验收权限、用量去重、私聊隔离/未读、消息提炼草稿、责任移交保留历史、复用清空成员和完成状态。
 - 所有插件 build / typecheck / test。公共桥、Codex bundle 和 DSH bundle 均经真实 stdio MCP 客户端协议烟测（共 9 项）；DSH 另有 5 项注册、计量、去重、路由及断网补报测试。
 - 对实际 Go 服务完成 MCP 身份、项目和会话列表的只读联调。
@@ -32,8 +32,16 @@ GitHub Actions 配置随源码提供，远端执行结果以仓库 Actions 页�
 
 ## 任务绑定会话更新
 
-- PostgreSQL：哈希任务授权、同名项目/任务隔离、不可变线程、过期/撤销/停用/职责变更、管理员授权降权、持久草稿作者权限、正常成员流程回归，17 组 race 集成测试和 vet 通过。
+- PostgreSQL：哈希任务授权、同名项目/任务隔离、不可变线程、过期/撤销/停用/职责变更、管理员授权降权、持久草稿作者权限、正常成员流程回归，18 组 race 集成测试和 vet 通过。
 - 桌面端：原生 App 实际加载成员连接和项目数据，任务详情显示 AI 工作会话面板，系统目录选择与取消正常，未修改试用项目。Rust 文件权限/路径校验/重复启动隔离测试通过；私有 profile 不含完整 App 访问令牌，只有任务 grant 和本机凭证指纹。异步启动按连接、成员、项目与任务隔离，attach 重试复用同一真实线程。
 - Codex CLI 0.156.1：真实创建并注入 developer 项目事实，关闭创建进程后由独立进程恢复，用户 turn 数为零。临时每线程 MCP 配置不随会话恢复，因此使用已安装全局插件与精确线程索引。没有执行真实模型调用。
 - MCP：未配置 IO_MEMBER_TOKEN 仍能 initialize/listTools；无授权时给出 App 接入提示；双绑定/不同线程/派生线程、权限/符号链接、过期和只读 Hook 均有协议测试。
 - 现有跨成员完整流程在临时服务与独立 schema 中通过，未添加或清理正在试用的项目记录。
+
+## 0.1.1 修复：已绑定会话打不开
+
+用户实际旧 profile 与服务端会话的权威 ID 全部一致，但 createdAt 的 UTC/北京时间表示不同。原生端和 MCP bridge 不再把时间字符串当作身份字段；后台新建、回读及更新的会话时间统一 UTC/微秒。旧 profile 通过正常激活恢复，不迁移用户记录。
+
+已绑定会话的「打开 Codex」直接幂等校验绑定、恢复本地 profile/线程索引并打开 `codex://threads/<id>`，不再先启动 Node 或 Codex CLI。未绑定的新会话仍先创建真实线程。
+
+回归验证：18 组真实 PostgreSQL race 集成测试与 vet；6 项原生 Rust 测试（另有1项交互式 Keychain测试默认忽略）；9 项 MCP bridge 测试（包含真实 stdio/HTTP 时间格式变化及所有权威 ID 错配）；插件构建/测试和 macOS 0.1.1 App 打包通过。新构建读取已保存凭证时，macOS 可能要求用户在系统钥匙串弹窗确认，程序不绕过该确认。

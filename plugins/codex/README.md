@@ -1,6 +1,6 @@
 # Codex 接入插件
 
-插件 `0.2.0` 包含 portable 清单、`.codex-plugin` 兼容布局、自包含 Node MCP runtime、App 会话 launcher 和全局 `hooks/hooks.json`。Node 22+ 必须可用。运行 `pnpm --filter @intelligent-organization/codex-plugin build` 构建，`test` 校验清单、启动协议和 MCP 行为。复制整个插件包即可，不依赖仓库目录。
+插件 `0.2.1` 包含 portable 清单、`.codex-plugin` 兼容布局、自包含 Node MCP runtime、App 会话 launcher 和全局 `hooks/hooks.json`。Node 22+ 必须可用。运行 `pnpm --filter @intelligent-organization/codex-plugin build` 构建，`test` 校验清单、启动协议和 MCP 行为。复制整个插件包即可，不依赖仓库目录。
 
 ## 从 App 启动固定任务
 
@@ -20,7 +20,7 @@ App 启动 `[nodeExecutable, absolutePluginPath/runtime/launcher.cjs]`，通过 
 {"nativeSessionId":"real-codex-thread-id","deepLink":"codex://threads/real-codex-thread-id","warnings":["首次请在 Codex 审核并信任 Hooks"]}
 ```
 
-App 随后使用完整成员凭证调用 attach，将服务返回的激活会话写回 profile，保存精确的线程索引，再打开深链。launcher 不打开 URL、不发送用户 prompt、不调用 `turn/start`。已有 `session.nativeSessionId` 时仅返回相同深链，先向服务校验绑定，不读取 Codex 历史或创建新线程。
+App 随后使用完整成员凭证调用 attach，将服务返回的激活会话写回 profile，保存精确的线程索引，再打开深链。launcher 不打开 URL、不发送用户 prompt、不调用 `turn/start`。App 对服务端已 active 且有 nativeSessionId 的会话，直接执行幂等 attach → 本机 activate → 打开深链，恢复不依赖 Node、Codex CLI 或原工作目录。launcher 仅用于尚未获得真实线程编号的新会话。已有 `session.nativeSessionId` 时仅返回相同深链，先向服务校验绑定，不读取 Codex 历史或创建新线程。
 
 失败时 exit code 为 `1`，stdout 为 `{error,code}`。错误和子进程日志不会带出授权值。App 必须将启动或 attach 失败显示为错误，不能假称 active。
 

@@ -9,7 +9,7 @@ const readline = require('node:readline');
 
 const SERVER_NAME = 'intelligent-organization-task';
 const activeClients = new Set();
-const PLUGIN_WARNING = '请在 Codex 安装并启用智能组织插件 0.2.0；桌面恢复后的自动上下文依靠全局插件和真实线程索引。';
+const PLUGIN_WARNING = '请在 Codex 安装并启用智能组织插件 0.2.0 或更新版本；桌面恢复后的自动上下文依靠全局插件和真实线程索引。';
 const HOOK_WARNING = '首次使用或插件更新后，请在 Codex 设置 → Hooks 中审核并信任项目上下文 hooks；未信任时需使用 organization_bound_context 读取当前依据。';
 
 class LaunchError extends Error {
@@ -161,7 +161,7 @@ class RpcClient {
     });
   }
   async initialize(timeoutMs) {
-    await this.request('initialize', { clientInfo: { name: 'intelligent_organization_launcher', title: 'Intelligent Organization', version: '0.2.0' }, capabilities: { experimentalApi: true } }, timeoutMs);
+    await this.request('initialize', { clientInfo: { name: 'intelligent_organization_launcher', title: 'Intelligent Organization', version: '0.2.1' }, capabilities: { experimentalApi: true } }, timeoutMs);
     this.write({ jsonrpc: '2.0', method: 'initialized' });
   }
   async close() {
