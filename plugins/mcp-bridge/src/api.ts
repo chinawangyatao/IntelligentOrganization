@@ -2,6 +2,7 @@ export interface Connection {
   baseUrl: string;
   token: string;
   host?: string;
+  nativeSessionId?: string;
 }
 
 export class ApiError extends Error {
@@ -39,6 +40,9 @@ export class OrganizationClient {
       method,
       headers: {
         Authorization: `Bearer ${this.connection.token}`,
+        ...(this.connection.nativeSessionId
+          ? { 'X-IO-Thread-ID': this.connection.nativeSessionId }
+          : {}),
         'Content-Type': 'application/json',
       },
       body: body === undefined ? undefined : JSON.stringify(body),

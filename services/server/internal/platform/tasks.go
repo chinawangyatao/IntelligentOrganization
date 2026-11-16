@@ -95,6 +95,11 @@ func (s *Store) patchTask(w http.ResponseWriter, r *http.Request) (any, error) {
 	if err := decode(r, &in); err != nil {
 		return nil, err
 	}
+	if workScope(r.Context()) != nil {
+		if in.OwnerID != nil || in.CollaboratorIDs != nil || in.ReviewerID != nil || (in.Status != nil && !enum(*in.Status, "todo", "in_progress", "blocked")) {
+			return nil, forbidden("AI 工作会话不能更改分工、提交人工验收状态或代替负责人验收")
+		}
+	}
 	ctx := r.Context()
 	a := actor(r)
 	var t Task

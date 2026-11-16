@@ -79,6 +79,11 @@ func (s *Store) deactivateMember(w http.ResponseWriter, r *http.Request) (any, e
 	return m, tx.Commit(ctx)
 }
 func (s *Store) listProjects(w http.ResponseWriter, r *http.Request) (any, error) {
+	if scope := workScope(r.Context()); scope != nil {
+		out := []Project{}
+		err := s.projectTx(r.Context(), actor(r), scope.Session.ProjectID, false, func(tx pgx.Tx, p Project) error { out = append(out, p); return nil })
+		return out, err
+	}
 	ctx := r.Context()
 	m := actor(r)
 	tx, err := s.Pool.Begin(ctx)

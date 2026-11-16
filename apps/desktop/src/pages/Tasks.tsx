@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import TaskWorkSessions from '../TaskWorkSessions';
 import {
   Plus,
   ArrowUpRight,
@@ -151,7 +152,12 @@ export default function Tasks(
       )}
       {create && <TaskForm {...props} initialNode={nodeFilter} onClose={() => setCreate(false)} />}{' '}
       {selectedCurrent && (
-        <TaskDetail {...props} task={selectedCurrent} onClose={() => setSelected(null)} />
+        <TaskDetail
+          key={`${props.serviceUrl}:${props.me.id}:${data.project.id}:${selectedCurrent.id}`}
+          {...props}
+          task={selectedCurrent}
+          onClose={() => setSelected(null)}
+        />
       )}
     </>
   );
@@ -375,6 +381,7 @@ function TaskDetail(props: PageProps & { task: Task; onClose: () => void }) {
             ))}
           </div>
         )}
+        {canWork && <TaskWorkSessions {...props} />}
         <Separator />
         <div className="flex items-center justify-between">
           <h3 className="font-medium">共同记忆基线</h3>

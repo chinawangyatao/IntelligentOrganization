@@ -94,6 +94,12 @@ func (s *Store) Handler() http.Handler {
 	}))
 	api := http.NewServeMux()
 	api.HandleFunc("/", wrap(func(w http.ResponseWriter, r *http.Request) (any, error) { return nil, missing("接口不存在") }))
+	api.HandleFunc("GET /api/agent/session", wrap(s.agentSession))
+	api.HandleFunc("GET /api/agent/context", wrap(s.agentContext))
+	api.HandleFunc("POST /api/projects/{pid}/tasks/{id}/work-sessions", wrap(s.createWorkSession))
+	api.HandleFunc("GET /api/projects/{pid}/tasks/{id}/work-sessions", wrap(s.listWorkSessions))
+	api.HandleFunc("POST /api/work-sessions/{id}/attach", wrap(s.attachWorkSession))
+	api.HandleFunc("POST /api/work-sessions/{id}/revoke", wrap(s.revokeWorkSession))
 	api.HandleFunc("GET /api/me", wrap(func(w http.ResponseWriter, r *http.Request) (any, error) { return actor(r), nil }))
 	api.HandleFunc("GET /api/members", wrap(s.listMembers))
 	api.HandleFunc("POST /api/members", wrap(s.createMember))
@@ -131,15 +137,36 @@ func (s *Store) Handler() http.Handler {
 			write(w, 401, map[string]string{"error": "请提供成员访问令牌", "code": "unauthorized"})
 			return
 		}
-		m, err := s.Authenticate(r.Context(), strings.TrimSpace(strings.TrimPrefix(auth, "Bearer ")))
+		token := strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
+		m, err := s.Authenticate(r.Context(), token)
+		var scope *grantScope
+		if errors.Is(err, pgx.ErrNoRows) {
+			m, scope, err = s.authenticateWorkSession(r.Context(), token, r.Header.Get("X-IO-Thread-ID"))
+		}
 		if err != nil {
-			if !errors.Is(err, pgx.ErrNoRows) {
-				slog.Error("authentication failed", "error", err)
+			var detail *apiError
+			if errors.As(err, &detail) {
+				write(w, detail.Status, map[string]string{"error": detail.Message, "code": detail.Code})
+			} else {
+				if !errors.Is(err, pgx.ErrNoRows) {
+					slog.Error("authentication failed", "error", err)
+				}
+				write(w, 401, map[string]string{"error": "访问令牌无效或成员已停用", "code": "unauthorized"})
 			}
-			write(w, 401, map[string]string{"error": "访问令牌无效或成员已停用", "code": "unauthorized"})
 			return
 		}
-		r = r.WithContext(context.WithValue(r.Context(), actorKey{}, m))
+		if err = authorizeGrantRoute(r, scope); err != nil {
+			var detail *apiError
+			if errors.As(err, &detail) {
+				write(w, detail.Status, map[string]string{"error": detail.Message, "code": detail.Code})
+			}
+			return
+		}
+		ctx := context.WithValue(r.Context(), actorKey{}, m)
+		if scope != nil {
+			ctx = context.WithValue(ctx, grantKey{}, scope)
+		}
+		r = r.WithContext(ctx)
 		api.ServeHTTP(w, r)
 	}))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +174,7 @@ func (s *Store) Handler() http.Handler {
 		if allowedOrigin(origin) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Allow-Headers", "Authorization,Content-Type")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization,Content-Type,X-IO-Thread-ID")
 			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS")
 		}
 		w.Header().Set("X-Content-Type-Options", "nosniff")

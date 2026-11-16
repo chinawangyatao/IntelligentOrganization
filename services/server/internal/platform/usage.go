@@ -30,6 +30,11 @@ func (s *Store) reportUsage(w http.ResponseWriter, r *http.Request) (any, error)
 	if err := decode(r, &in); err != nil {
 		return nil, err
 	}
+	if scope := workScope(r.Context()); scope != nil {
+		if (in.MemberID != "" && in.MemberID != scope.Session.MemberID) || in.Host != scope.Session.Host || in.TaskID != scope.Session.TaskID || (in.NodeID != "" && in.NodeID != scope.Session.NodeID) {
+			return nil, forbidden("用量归属必须匹配绑定的成员、任务、节点和宿主")
+		}
+	}
 	for _, v := range []struct{ s, label string }{{in.RequestID, "请求ID"}, {in.Host, "宿主"}, {in.Provider, "供应商"}, {in.Model, "模型"}} {
 		if err := validText(v.s, v.label, 300); err != nil {
 			return nil, err

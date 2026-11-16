@@ -66,6 +66,11 @@ func (s *Store) createMemory(w http.ResponseWriter, r *http.Request) (any, error
 	if in.Status == "" {
 		in.Status = "draft"
 	}
+	if scope := workScope(r.Context()); scope != nil {
+		if in.Status != "draft" || (in.NodeID != "" && in.NodeID != scope.Session.NodeID) {
+			return nil, forbidden("AI 工作会话只能为绑定任务提出相关草稿")
+		}
+	}
 	a := actor(r)
 	ctx := r.Context()
 	var m Memory
@@ -113,6 +118,19 @@ func (s *Store) patchMemory(w http.ResponseWriter, r *http.Request) (any, error)
 		if err != nil {
 			return err
 		}
+		if scope := workScope(ctx); scope != nil {
+			if m.Status != "draft" || (m.NodeID != "" && m.NodeID != scope.Session.NodeID) || (in.Status != nil && *in.Status != "draft") {
+				return forbidden("AI 工作会话只能修改本人创建的相关草稿，正式发布需在 App 确认")
+			}
+			// Ownership comes from the first durable revision, not the last editor.
+			var creator string
+			if err = tx.QueryRow(ctx, `SELECT data->>'updatedBy' FROM io_memory_versions WHERE memory_id=$1 ORDER BY version LIMIT 1`, m.ID).Scan(&creator); err != nil {
+				return err
+			}
+			if creator != a.ID {
+				return forbidden("AI 工作会话不能修改其他成员创建的草稿")
+			}
+		}
 		wasPublished := m.Status == "published"
 		if err = checkVersion(in.Version, m.Version); err != nil {
 			return err
@@ -121,7 +139,7 @@ func (s *Store) patchMemory(w http.ResponseWriter, r *http.Request) (any, error)
 			if err = canPublish(ctx, tx, a, p.ID, m.NodeID); err != nil {
 				return err
 			}
-		} else if m.UpdatedBy != a.ID && !isAdmin(a) {
+		} else if workScope(ctx) == nil && m.UpdatedBy != a.ID && !isAdmin(a) {
 			if err = canPublish(ctx, tx, a, p.ID, m.NodeID); err != nil {
 				return err
 			}
@@ -158,6 +176,9 @@ func (s *Store) memoryHistory(w http.ResponseWriter, r *http.Request) (any, erro
 		m, err := getJSON[Memory](ctx, tx, "io_memories", r.PathValue("id"), p.ID)
 		if err != nil {
 			return err
+		}
+		if scope := workScope(ctx); scope != nil && m.NodeID != "" && m.NodeID != scope.Session.NodeID {
+			return forbidden("此记忆不属于绑定任务的上下文")
 		}
 		rows, err := tx.Query(ctx, `SELECT data FROM io_memory_versions WHERE memory_id=$1 ORDER BY version DESC`, m.ID)
 		if err != nil {

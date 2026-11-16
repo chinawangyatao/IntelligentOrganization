@@ -130,6 +130,7 @@ export interface TaskContext {
 export type Api = <T>(path: string, method?: string, body?: unknown) => Promise<T>;
 export type Run = <T>(action: () => Promise<T>, success?: string) => Promise<T | undefined>;
 export interface PageProps {
+  serviceUrl: string;
   data: Snapshot;
   members: Member[];
   me: Member;
@@ -241,4 +242,19 @@ export interface OrganizationOverview {
   };
   costs: CostTotal[];
   projects: OrganizationProject[];
+}
+
+export interface WorkSession {
+  id: string;
+  serviceInstanceId: string;
+  memberId: string;
+  projectId: string;
+  taskId: string;
+  nodeId: string;
+  host: 'codex' | 'deepseek-harness';
+  nativeSessionId?: string;
+  status: 'prepared' | 'active' | 'revoked' | 'expired';
+  createdAt: string;
+  expiresAt: string;
+  updatedAt: string;
 }

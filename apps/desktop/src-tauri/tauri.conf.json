@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.weimeng.intelligent-organization",
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "node ../../scripts/build-desktop.mjs --dev",
     "devUrl": "http://127.0.0.1:1420",
-    "beforeBuildCommand": "pnpm build",
+    "beforeBuildCommand": "node ../../scripts/build-desktop.mjs",
     "frontendDist": "../dist"
   },
   "app": {
@@ -40,6 +40,10 @@
     ],
     "macOS": {
       "minimumSystemVersion": "13.3"
+    },
+    "resources": {
+      "../../../plugins/codex/runtime/launcher.cjs": "integrations/codex/launcher.cjs",
+      "../../../plugins/codex/runtime/server.cjs": "integrations/codex/server.cjs"
     }
   }
 }

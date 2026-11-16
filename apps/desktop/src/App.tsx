@@ -145,6 +145,7 @@ export default function App() {
     handovers: [],
   };
   const shared = {
+    serviceUrl: w.connection.baseUrl,
     data: w.data || emptyData,
     members: w.members,
     me: w.me,

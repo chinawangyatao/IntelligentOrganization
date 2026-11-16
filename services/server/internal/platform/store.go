@@ -18,6 +18,8 @@ import (
 // Entity payloads are separately persisted, not one shared application snapshot.
 // A project row lock is the transaction boundary for its cross-entity invariants.
 const migration = `
+CREATE TABLE IF NOT EXISTS io_workspace_metadata(key text PRIMARY KEY,value text NOT NULL UNIQUE);
+INSERT INTO io_workspace_metadata(key,value) VALUES('instance_id','service_'||md5(random()::text||clock_timestamp()::text)) ON CONFLICT(key) DO NOTHING;
 CREATE TABLE IF NOT EXISTS io_members (
  id text PRIMARY KEY, name text NOT NULL, role text NOT NULL CHECK (role IN ('admin','member')),
  active boolean NOT NULL DEFAULT true, created_at timestamptz NOT NULL,
@@ -45,6 +47,17 @@ CREATE INDEX IF NOT EXISTS io_messages_conversation_idx ON io_messages(conversat
 CREATE TABLE IF NOT EXISTS io_receipts(conversation_id text NOT NULL REFERENCES io_conversations(id),member_id text NOT NULL REFERENCES io_members(id),message_id text NOT NULL REFERENCES io_messages(id),seq bigint NOT NULL,read_at timestamptz NOT NULL,PRIMARY KEY(conversation_id,member_id));
 CREATE TABLE IF NOT EXISTS io_notifications(id text PRIMARY KEY,project_id text NOT NULL REFERENCES io_projects(id),member_id text NOT NULL REFERENCES io_members(id),data jsonb NOT NULL);
 CREATE INDEX IF NOT EXISTS io_notifications_member_idx ON io_notifications(member_id);
+CREATE TABLE IF NOT EXISTS io_work_sessions(
+ id text PRIMARY KEY,service_instance_id text NOT NULL REFERENCES io_workspace_metadata(value),
+ member_id text NOT NULL REFERENCES io_members(id),project_id text NOT NULL REFERENCES io_projects(id),
+ task_id text NOT NULL REFERENCES io_tasks(id),node_id text NOT NULL REFERENCES io_nodes(id),
+ host text NOT NULL CHECK(host IN('codex','deepseek-harness')),native_session_id text,
+ status text NOT NULL CHECK(status IN('prepared','active','revoked','expired')),
+ created_at timestamptz NOT NULL,expires_at timestamptz NOT NULL,updated_at timestamptz NOT NULL,
+ token_hash text NOT NULL UNIQUE,assignment_hash text NOT NULL,UNIQUE(host,native_session_id)
+);
+CREATE INDEX IF NOT EXISTS io_work_sessions_task_idx ON io_work_sessions(project_id,task_id,member_id);
+
 
 
 `
@@ -270,6 +283,9 @@ func (s *Store) projectTx(ctx context.Context, m Member, pid string, write bool,
 		if !allowed {
 			return forbidden("你没有该项目的访问权限")
 		}
+	}
+	if err = s.recheckWorkScope(ctx, tx, pid, write); err != nil {
+		return err
 	}
 	if err = fn(tx, p); err != nil {
 		return err

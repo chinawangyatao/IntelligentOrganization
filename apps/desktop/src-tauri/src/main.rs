@@ -2,6 +2,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::Manager;
+mod work_sessions;
 
 const SERVICE: &str = "com.weimeng.intelligent-organization";
 
@@ -73,7 +74,11 @@ fn connection_clear(app: tauri::AppHandle) -> Result<(), String> {
 }
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![connection_load, connection_save, connection_clear])
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![connection_load, connection_save, connection_clear,
+            work_sessions::work_session_pick_folder, work_sessions::work_session_prepare,
+            work_sessions::work_session_local_status, work_sessions::work_session_launch,
+            work_sessions::work_session_activate, work_sessions::work_session_open, work_sessions::work_session_forget])
         .run(tauri::generate_context!())
         .expect("无法启动智能组织桌面应用");
 }

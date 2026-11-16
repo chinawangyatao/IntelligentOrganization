@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "mcp_tool", "server": "intelligent-organization", "tool": "organization_bound_context", "input": { "event": "SessionStart", "turnId": "${turn_id}", "cwd": "${cwd}" }, "timeout": 15, "statusMessage": "同步项目上下文" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "mcp_tool", "server": "intelligent-organization", "tool": "organization_bound_context", "input": { "event": "UserPromptSubmit", "turnId": "${turn_id}", "cwd": "${cwd}" }, "timeout": 15, "statusMessage": "同步项目上下文" }] }],
+    "PostCompact": [{ "hooks": [{ "type": "mcp_tool", "server": "intelligent-organization", "tool": "organization_bound_context", "input": { "event": "PostCompact", "turnId": "${turn_id}", "cwd": "${cwd}" }, "timeout": 15, "statusMessage": "同步项目上下文" }] }]
+  }
+}

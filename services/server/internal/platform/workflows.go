@@ -20,6 +20,9 @@ func (s *Store) createIssue(w http.ResponseWriter, r *http.Request) (any, error)
 	if err := decode(r, &in); err != nil {
 		return nil, err
 	}
+	if scope := workScope(r.Context()); scope != nil && (in.TaskID != scope.Session.TaskID || in.NodeID != scope.Session.NodeID) {
+		return nil, forbidden("问题必须关联绑定的任务与节点")
+	}
 	if err := validText(in.Title, "问题标题", 300); err != nil {
 		return nil, err
 	}
